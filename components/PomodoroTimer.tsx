@@ -1,188 +1,166 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/Button';
-import { IconButton } from './ui/IconButton';
+import { useTimerStore } from '../store/useTimerStore';
 
-// --- Timer Settings ---
-const FOCUS_DURATION = 25 * 60;
-const SHORT_BREAK_DURATION = 5 * 60;
-const LONG_BREAK_DURATION = 15 * 60;
-const INTERVALS_BEFORE_LONG_BREAK = 4;
-
-// --- Sound ---
 const NOTIFICATION_SOUND_URL = 'https://cdn.freesound.org/previews/220/220170_4100837-lq.mp3';
 
-// --- Icons ---
-const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const PauseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
-const ResetIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" /></svg>;
-const SkipIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.168V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.832L4.555 5.168z" /></svg>;
+// --- Helper Components ---
 
+const Bubbles = () => (
+  <div className="absolute inset-0 pointer-events-none overflow-hidden">
+    {Array.from({ length: 15 }).map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute bottom-0 bg-cyan-400/20 rounded-full"
+        style={{
+          left: `${Math.random() * 100}%`,
+          width: `${5 + Math.random() * 15}px`,
+          height: `${5 + Math.random() * 15}px`,
+        }}
+        initial={{ y: 0, opacity: 1 }}
+        animate={{ y: -window.innerHeight, opacity: 0 }}
+        transition={{
+          duration: 10 + Math.random() * 15,
+          repeat: Infinity,
+          repeatType: 'loop',
+          delay: Math.random() * 20,
+          ease: 'linear',
+        }}
+      />
+    ))}
+  </div>
+);
+
+const Waves = ({ progress }: { progress: number }) => {
+  const wavePaths = [
+    "M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z",
+    "M-160 66c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z",
+    "M-160 22c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z",
+  ];
+  const opacities = [0.8, 0.6, 0.4];
+  const durations = [12, 15, 18];
+
+  return (
+    <motion.div
+      className="absolute bottom-0 left-0 w-full h-full"
+      animate={{ y: `${(1 - progress) * 100}%` }}
+      transition={{ duration: 1, ease: "easeInOut" }}
+    >
+      <div className="absolute bottom-0 w-full">
+        {wavePaths.map((path, i) => (
+          <svg key={i} className="absolute bottom-0 w-full h-48" viewBox="0 0 88 44">
+            <motion.path
+              d={path}
+              fill="rgba(0,255,255,0.1)"
+              initial={{ x: 0 }}
+              animate={{ x: -176 }}
+              transition={{
+                duration: durations[i],
+                repeat: Infinity,
+                repeatType: 'loop',
+                ease: 'linear',
+              }}
+            />
+          </svg>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
+const ModeSelector = () => {
+  const { mode, setMode } = useTimerStore(state => ({ mode: state.mode, setMode: state.setMode }));
+  const modes: Array<'focus' | 'shortBreak' | 'longBreak'> = ['focus', 'shortBreak', 'longBreak'];
+  const labels = { focus: 'Focus', shortBreak: 'Short Break', longBreak: 'Long Break' };
+
+  return (
+    <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-white/20 backdrop-blur-md rounded-full shadow-lg">
+      {modes.map(m => (
+        <button
+          key={m}
+          onClick={() => setMode(m)}
+          className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+            mode === m ? 'text-white' : 'text-blue-100 hover:text-white'
+          }`}
+        >
+          {mode === m && (
+            <motion.div
+              layoutId="active-pill"
+              className="absolute inset-0 bg-cyan-500/50 rounded-full"
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10">{labels[m]}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+
+// --- Main Component ---
 
 export const PomodoroTimer: React.FC = () => {
-  const [mode, setMode] = useState<'focus' | 'shortBreak' | 'longBreak'>('focus');
-  const [timeRemaining, setTimeRemaining] = useState(FOCUS_DURATION);
-  const [isActive, setIsActive] = useState(false);
-  const [pomodoros, setPomodoros] = useState(0); // Completed focus sessions this set
-
-  const notificationSound = useMemo(() => {
-    const audio = new Audio(NOTIFICATION_SOUND_URL);
-    audio.volume = 0.5;
-    return audio;
-  }, []);
-
-  const totalDuration = useMemo(() => {
-    switch (mode) {
-      case 'focus': return FOCUS_DURATION;
-      case 'shortBreak': return SHORT_BREAK_DURATION;
-      case 'longBreak': return LONG_BREAK_DURATION;
-    }
-  }, [mode]);
-
-  const showNotification = useCallback((message: string) => {
-    // Play sound effect
-    notificationSound.play().catch(error => console.warn("Audio notification blocked by browser:", error));
-
-    // Show browser notification
-    if (!('Notification' in window)) return;
-    if (Notification.permission === 'granted') {
-      new Notification('You Decide', { body: message });
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          new Notification('You Decide', { body: message });
-        }
-      });
-    }
-  }, [notificationSound]);
-
-  const handleNextMode = useCallback(() => {
-    if (mode === 'focus') {
-      const newPomodoros = pomodoros + 1;
-      setPomodoros(newPomodoros);
-      if (newPomodoros % INTERVALS_BEFORE_LONG_BREAK === 0) {
-        setMode('longBreak');
-        setTimeRemaining(LONG_BREAK_DURATION);
-        showNotification('Time for a long break!');
-      } else {
-        setMode('shortBreak');
-        setTimeRemaining(SHORT_BREAK_DURATION);
-        showNotification('Time for a short break!');
-      }
-    } else { // After any break
-      setMode('focus');
-      setTimeRemaining(FOCUS_DURATION);
-      showNotification('Time to focus!');
-    }
-  }, [mode, pomodoros, showNotification]);
+  const { mode, timeRemaining, isActive, durations, tick, toggleIsActive } = useTimerStore();
+  
+  const notificationSound = useMemo(() => new Audio(NOTIFICATION_SOUND_URL), []);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    
-    if (isActive && timeRemaining > 0) {
+    if (isActive) {
       interval = setInterval(() => {
-        setTimeRemaining(time => time - 1);
+        tick();
       }, 1000);
-    } else if (isActive && timeRemaining === 0) {
-      handleNextMode();
     }
-
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, timeRemaining, handleNextMode]);
-  
-  const handleToggle = () => setIsActive(prev => !prev);
+  }, [isActive, tick]);
 
-  const handleReset = useCallback(() => {
-    setIsActive(false);
-    setMode('focus');
-    setTimeRemaining(FOCUS_DURATION);
-    setPomodoros(0);
-  }, []);
+  useEffect(() => {
+    if (timeRemaining === 0 && isActive) {
+      notificationSound.play().catch(e => console.error("Error playing sound:", e));
+    }
+  }, [timeRemaining, isActive, notificationSound]);
+
+  const totalDuration = durations[mode];
+  const progress = timeRemaining / totalDuration;
 
   const formatTime = (seconds: number) => {
-      const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const secs = (seconds % 60).toString().padStart(2, '0');
-      return `${mins}:${secs}`;
-  }
-
-  const modeDetails = {
-    focus: { label: "Focus", color: "text-indigo-400", trackColor: "stroke-indigo-500/20", progressColor: "stroke-indigo-500" },
-    shortBreak: { label: "Short Break", color: "text-green-400", trackColor: "stroke-green-500/20", progressColor: "stroke-green-500" },
-    longBreak: { label: "Long Break", color: "text-pink-400", trackColor: "stroke-pink-500/20", progressColor: "stroke-pink-500" },
-  }
-
-  const radius = 85;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (timeRemaining / totalDuration) * circumference;
-
-  // Fix: Corrected the framer-motion variant's transition type. The `ease` property must be a literal type, but was inferred as a generic `string`. Adding `as const` ensures the correct type, resolving the error.
-  const circleVariants = {
-    animate: (customStrokeDashoffset: number) => ({
-      strokeDashoffset: customStrokeDashoffset,
-      transition: { duration: 0.5, ease: 'linear' as const },
-    }),
-  };
-
-  // Fix: Using variants to bypass potential TypeScript errors with direct animation props like 'initial'.
-  const labelVariants = {
-    initial: { opacity: 0, y: -10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 10 },
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-3xl shadow-2xl flex flex-col items-center gap-6 w-full max-w-sm mx-auto">
-      <div className="relative w-52 h-52 sm:w-64 sm:h-64 flex items-center justify-center">
-        <svg className="absolute w-full h-full" viewBox="0 0 200 200">
-            <circle cx="100" cy="100" r={radius} fill="none" strokeWidth="15" className={modeDetails[mode].trackColor} />
-            <motion.circle
-                cx="100" cy="100" r={radius}
-                fill="none"
-                strokeWidth="15"
-                className={modeDetails[mode].progressColor}
-                strokeLinecap="round"
-                transform="rotate(-90 100 100)"
-                strokeDasharray={circumference}
-                variants={circleVariants}
-                custom={strokeDashoffset}
-                animate="animate"
-            />
-        </svg>
-        <div className="z-10 text-center">
-            <AnimatePresence mode="wait">
-                <motion.p 
-                    key={mode}
-                    variants={labelVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className={`font-semibold text-lg ${modeDetails[mode].color}`}
-                >
-                    {modeDetails[mode].label}
-                </motion.p>
-            </AnimatePresence>
-            <p className="text-5xl sm:text-6xl font-mono font-bold text-gray-800 dark:text-gray-100">
-                {formatTime(timeRemaining)}
-            </p>
+    <div className="fixed inset-0 bg-gradient-to-b from-[#87CEEB] to-[#0A1F44] overflow-hidden text-white font-sans">
+      <Bubbles />
+      <Waves progress={progress} />
+      
+      <div className="relative z-10 flex flex-col items-center justify-center h-full">
+        <ModeSelector />
+
+        <div 
+          className="flex flex-col items-center justify-center cursor-pointer"
+          onClick={toggleIsActive}
+        >
+          <p className="font-bold text-7xl sm:text-8xl md:text-9xl tracking-wider" style={{ textShadow: '0 0 20px rgba(0,255,255,0.5)' }}>
+            {formatTime(timeRemaining)}
+          </p>
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={isActive ? 'pause' : 'play'}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 0.7 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mt-4 text-lg font-medium tracking-widest uppercase"
+            >
+              {isActive ? 'Click to Pause' : 'Click to Start'}
+            </motion.p>
+          </AnimatePresence>
         </div>
       </div>
-      
-      <div className="flex items-center justify-center gap-4 w-full">
-        <IconButton onClick={handleReset} aria-label="Reset Timer"><ResetIcon /></IconButton>
-        <Button
-            onClick={handleToggle}
-            className="w-32 h-16 text-2xl rounded-full"
-        >
-          {isActive ? 'Pause' : 'Start'}
-        </Button>
-        <IconButton onClick={handleNextMode} aria-label="Skip Session"><SkipIcon /></IconButton>
-      </div>
-      
-      <p className="text-sm text-gray-500 dark:text-gray-400 tracking-wider">
-        Pomodoros: <span className="font-bold">{pomodoros}</span>
-      </p>
     </div>
   );
 };

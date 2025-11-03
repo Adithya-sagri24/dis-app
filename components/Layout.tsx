@@ -44,6 +44,11 @@ export const Layout: React.FC = () => {
     }, []);
     
     const PageComponent = routes[page] || HomePage;
+    const isHomePage = page === '#/home';
+
+    if (isHomePage) {
+        return <PageComponent />;
+    }
 
     return (
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">
