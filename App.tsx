@@ -36,8 +36,8 @@ const App: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <p className="text-xl text-gray-500 animate-pulse">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-xl text-white animate-pulse">Loading Application...</p>
       </div>
     );
   }
