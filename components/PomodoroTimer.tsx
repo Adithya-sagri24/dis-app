@@ -117,11 +117,11 @@ export const PomodoroTimer: React.FC = () => {
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (timeRemaining / totalDuration) * circumference;
 
-  // Fix: Using variants to bypass potential TypeScript errors with direct animation props like 'transition'.
+  // Fix: Corrected the framer-motion variant's transition type. The `ease` property must be a literal type, but was inferred as a generic `string`. Adding `as const` ensures the correct type, resolving the error.
   const circleVariants = {
     animate: (customStrokeDashoffset: number) => ({
       strokeDashoffset: customStrokeDashoffset,
-      transition: { duration: 0.5, ease: "linear" },
+      transition: { duration: 0.5, ease: 'linear' as const },
     }),
   };
 

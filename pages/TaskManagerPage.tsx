@@ -12,10 +12,37 @@ const TrashIcon = () => (
     </svg>
 );
 
+const CalendarIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+);
+
+// --- Helper Functions for Dates ---
+const isOverdue = (dueDate: string, isCompleted: boolean): boolean => {
+    if (isCompleted || !dueDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Compare date part only
+
+    // Parse 'YYYY-MM-DD' to avoid timezone issues with `new Date(string)`
+    const parts = dueDate.split('-').map(p => parseInt(p, 10));
+    const due = new Date(parts[0], parts[1] - 1, parts[2]);
+
+    return due < today;
+};
+
+const formatDueDate = (dueDate: string): string => {
+    const parts = dueDate.split('-').map(p => parseInt(p, 10));
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
+
 export const TaskManagerPage: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newDueDate, setNewDueDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,7 +73,11 @@ export const TaskManagerPage: React.FC = () => {
 
     const { data, error } = await supabase
       .from('tasks')
-      .insert({ title: newTaskTitle, user_id: user.id })
+      .insert({ 
+          title: newTaskTitle, 
+          user_id: user.id,
+          due_date: newDueDate || null 
+      })
       .select()
       .single();
 
@@ -55,6 +86,7 @@ export const TaskManagerPage: React.FC = () => {
     } else if (data) {
       setTasks([data, ...tasks]);
       setNewTaskTitle('');
+      setNewDueDate('');
     }
   };
   
@@ -93,16 +125,23 @@ export const TaskManagerPage: React.FC = () => {
         <Header title="Manage Your Tasks" subtitle="Stay organized and productive." />
 
         <main>
-          <form onSubmit={handleAddTask} className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex gap-3">
+          <form onSubmit={handleAddTask} className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-wrap sm:flex-nowrap gap-3">
             <input
               type="text"
               placeholder="Add a new task..."
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="flex-grow px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-grow px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
               aria-label="New task title"
             />
-            <Button onClick={handleAddTask} className="w-auto px-6" disabled={!newTaskTitle.trim()}>
+            <input
+                type="date"
+                value={newDueDate}
+                onChange={(e) => setNewDueDate(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500 dark:text-gray-400"
+                aria-label="Due date"
+            />
+            <Button onClick={handleAddTask} className="w-full sm:w-auto px-6" disabled={!newTaskTitle.trim()}>
                 Add
             </Button>
           </form>
@@ -124,7 +163,7 @@ export const TaskManagerPage: React.FC = () => {
                         id={`task-${task.id}`}
                         checked={task.is_completed}
                         onChange={() => handleToggleTask(task.id, task.is_completed)}
-                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 cursor-pointer"
+                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 cursor-pointer flex-shrink-0"
                     />
                     <label 
                         htmlFor={`task-${task.id}`}
@@ -133,9 +172,21 @@ export const TaskManagerPage: React.FC = () => {
                         {task.title}
                     </label>
                 </div>
-                <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 flex-shrink-0">
-                    <TrashIcon />
-                </IconButton>
+                <div className="flex items-center flex-shrink-0">
+                    {task.due_date && (
+                        <span className={`text-sm mr-4 flex items-center ${
+                            isOverdue(task.due_date, task.is_completed) 
+                            ? 'text-red-500 dark:text-red-400 font-semibold' 
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}>
+                            <CalendarIcon />
+                            {formatDueDate(task.due_date)}
+                        </span>
+                    )}
+                    <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50">
+                        <TrashIcon />
+                    </IconButton>
+                </div>
               </div>
             ))}
           </div>

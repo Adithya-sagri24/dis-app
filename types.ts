@@ -12,6 +12,7 @@ export interface Task {
   title: string;
   is_completed: boolean;
   created_at: string;
+  due_date?: string | null;
 }
 
 // Corresponds to the output from face-api.js .withFaceExpressions()
