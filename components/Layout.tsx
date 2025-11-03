@@ -7,6 +7,7 @@ import { AnalyticsPage } from '../pages/AnalyticsPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { PrivacyPage } from '../pages/PrivacyPage';
 import { IconButton } from './ui/IconButton';
+import { motion } from 'framer-motion';
 
 const routes: { [key: string]: React.ComponentType } = {
   '#/': HomePage,
@@ -25,22 +26,20 @@ const MenuIcon = () => (
 
 export const Layout: React.FC = () => {
   const [hash, setHash] = useState(window.location.hash || '#/');
-  const [isNavOpen, setIsNavOpen] = useState(window.innerWidth > 768); // Open by default on desktop
+  const [isNavOpen, setIsNavOpen] = useState(window.innerWidth > 768);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      setHash(window.location.hash || '#/');
-    };
+    const handleHashChange = () => setHash(window.location.hash || '#/');
     const handleResize = () => {
-        if (window.innerWidth > 768) {
-            setIsNavOpen(true);
-        } else {
-            setIsNavOpen(false);
-        }
+        if (window.innerWidth > 768) setIsNavOpen(true);
+        else setIsNavOpen(false);
     };
 
     window.addEventListener('hashchange', handleHashChange);
     window.addEventListener('resize', handleResize);
+    
+    handleResize(); // Initial check
+
     return () => {
       window.removeEventListener('hashchange', handleHashChange);
       window.removeEventListener('resize', handleResize);
@@ -48,23 +47,30 @@ export const Layout: React.FC = () => {
   }, []);
   
   const Page = routes[hash] || HomePage;
+  const isHomePage = hash === '#/';
+
+  const sidebarWidth = isNavOpen ? '256px' : '0px';
 
   return (
-    <div className="relative min-h-screen flex">
-      <Navbar isOpen={isNavOpen} />
-      <main 
-        className="flex-1 transition-all duration-300 ease-in-out"
-        style={{ paddingLeft: isNavOpen ? '16rem' : '0' }}
+    <div className="relative min-h-screen flex w-full">
+      <Navbar isOpen={isNavOpen} setIsOpen={setIsNavOpen} />
+      
+      <motion.main 
+        className="flex-1 flex flex-col h-screen"
+        animate={{ paddingLeft: window.innerWidth > 768 ? sidebarWidth : '0px' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        <div className="absolute top-4 left-4 z-20">
-            <IconButton onClick={() => setIsNavOpen(!isNavOpen)} aria-label="Toggle navigation" className="bg-black/20 backdrop-blur-sm">
+        {!isHomePage && (
+          <div className="absolute top-4 left-4 z-30">
+            <IconButton onClick={() => setIsNavOpen(!isNavOpen)} aria-label="Toggle navigation">
                 <MenuIcon />
             </IconButton>
-        </div>
-        <div className="p-4 sm:p-6 md:p-8 h-full overflow-y-auto">
+          </div>
+        )}
+        <div className="flex-1 p-4 sm:p-6 md:p-8 w-full h-full overflow-y-auto">
             <Page />
         </div>
-      </main>
+      </motion.main>
     </div>
   );
 };

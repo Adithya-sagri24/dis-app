@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { Header } from '../components/ui/Header';
 import { IconButton } from '../components/ui/IconButton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const TrashIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -18,16 +19,20 @@ const CalendarIcon = () => (
     </svg>
 );
 
+const PlusIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+);
+
+
 // --- Helper Functions for Dates ---
 const isOverdue = (dueDate: string, isCompleted: boolean): boolean => {
     if (isCompleted || !dueDate) return false;
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Compare date part only
-
-    // Parse 'YYYY-MM-DD' to avoid timezone issues with `new Date(string)`
+    today.setHours(0, 0, 0, 0); 
     const parts = dueDate.split('-').map(p => parseInt(p, 10));
     const due = new Date(parts[0], parts[1] - 1, parts[2]);
-
     return due < today;
 };
 
@@ -37,160 +42,185 @@ const formatDueDate = (dueDate: string): string => {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
+const TaskFormModal: React.FC<{ onClose: () => void, onTaskAdded: (task: Task) => void }> = ({ onClose, onTaskAdded }) => {
+    const { user } = useAuth();
+    const [title, setTitle] = useState('');
+    const [dueDate, setDueDate] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (title.trim() === '' || !user) return;
+
+        const { data, error } = await supabase
+            .from('tasks')
+            .insert({ title, user_id: user.id, due_date: dueDate || null })
+            .select()
+            .single();
+
+        if (data) onTaskAdded(data);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+            <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md p-6 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl"
+            >
+                <h2 className="text-xl font-bold mb-4">Add New Task</h2>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="text"
+                        placeholder="Task title..."
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full px-4 py-2 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                        autoFocus
+                    />
+                    <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        className="w-full px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    />
+                    <div className="flex justify-end gap-4 pt-2">
+                        <Button onClick={onClose} className="w-auto px-6 !bg-transparent hover:!bg-white/10 border border-white/20">Cancel</Button>
+                        <Button onClick={handleSubmit} className="w-auto px-6" disabled={!title.trim()}>Add Task</Button>
+                    </div>
+                </form>
+            </motion.div>
+        </div>
+    );
+};
 
 export const TaskManagerPage: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newDueDate, setNewDueDate] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchTasks = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!user) return;
     setLoading(true);
     setError(null);
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
+      .order('is_completed', { ascending: true })
       .order('created_at', { ascending: false });
 
-    if (error) {
-      setError(error.message);
-    } else if (data) {
-      setTasks(data);
-    }
+    if (error) setError(error.message);
+    else if (data) setTasks(data);
     setLoading(false);
-  }, [isAuthenticated]);
+  }, [user]);
 
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
-
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newTaskTitle.trim() === '' || !user) return;
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({ 
-          title: newTaskTitle, 
-          user_id: user.id,
-          due_date: newDueDate || null 
-      })
-      .select()
-      .single();
-
-    if (error) {
-      setError(error.message);
-    } else if (data) {
-      setTasks([data, ...tasks]);
-      setNewTaskTitle('');
-      setNewDueDate('');
-    }
-  };
   
   const handleDeleteTask = async (id: number) => {
     const originalTasks = tasks;
-    // Optimistically remove from UI
     setTasks(tasks.filter((task) => task.id !== id));
-
     const { error } = await supabase.from('tasks').delete().eq('id', id);
-
     if (error) {
       setError(error.message);
-      // If error, revert the change
       setTasks(originalTasks);
     }
   };
 
   const handleToggleTask = async (id: number, is_completed: boolean) => {
-    // Optimistically update UI
     setTasks(tasks.map(task => task.id === id ? {...task, is_completed: !is_completed} : task));
-
     const { error } = await supabase
         .from('tasks')
         .update({ is_completed: !is_completed })
         .eq('id', id);
-    
     if (error) {
         setError(error.message);
-        // If error, revert by re-fetching
         fetchTasks();
     }
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto animate-fade-in relative">
         <Header title="Manage Your Tasks" subtitle="Stay organized and productive." />
 
         <main className="mt-8">
-          <form onSubmit={handleAddTask} className="mb-8 p-4 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg flex flex-wrap sm:flex-nowrap gap-3">
-            <input
-              type="text"
-              placeholder="Add a new task..."
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="flex-grow px-4 py-2 border border-white/20 rounded-lg bg-white/10 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-sky-400 w-full sm:w-auto"
-              aria-label="New task title"
-            />
-            <input
-                type="date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                className="px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
-                aria-label="Due date"
-            />
-            <Button onClick={handleAddTask} className="w-full sm:w-auto px-6" disabled={!newTaskTitle.trim()}>
-                Add
-            </Button>
-          </form>
-
           {loading && <p className="text-center text-gray-300">Loading tasks...</p>}
           {error && <p className="text-center text-red-400">{error}</p>}
           
-          <div className="space-y-4">
+          <AnimatePresence>
             {!loading && tasks.length === 0 && (
-                <div className="text-center py-10 px-4 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg">
-                    <p className="text-gray-300">You have no tasks yet. Add one above to get started!</p>
-                </div>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-10 px-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl"
+                >
+                    <p className="text-gray-200">You have no tasks yet. Add one to get started!</p>
+                </motion.div>
             )}
-            {tasks.map((task) => (
-              <div key={task.id} className="bg-black/20 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-md flex justify-between items-center transition-transform hover:scale-[1.02]">
-                <div className="flex items-center flex-grow mr-4">
-                    <input
-                        type="checkbox"
-                        id={`task-${task.id}`}
-                        checked={task.is_completed}
-                        onChange={() => handleToggleTask(task.id, task.is_completed)}
-                        className="h-5 w-5 rounded border-gray-400 bg-transparent text-sky-400 focus:ring-sky-400 mr-3 cursor-pointer flex-shrink-0"
-                    />
-                    <label 
-                        htmlFor={`task-${task.id}`}
-                        className={`flex-grow text-gray-200 cursor-pointer ${task.is_completed ? 'line-through text-gray-400' : ''}`}
-                    >
-                        {task.title}
-                    </label>
-                </div>
-                <div className="flex items-center flex-shrink-0">
-                    {task.due_date && (
-                        <span className={`text-sm mr-4 flex items-center ${
-                            isOverdue(task.due_date, task.is_completed) 
-                            ? 'text-red-400 font-semibold' 
-                            : 'text-gray-400'
-                        }`}>
-                            <CalendarIcon />
-                            {formatDueDate(task.due_date)}
-                        </span>
-                    )}
-                    <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-400 hover:bg-red-500/20">
-                        <TrashIcon />
-                    </IconButton>
-                </div>
-              </div>
-            ))}
-          </div>
+            <motion.div layout className="space-y-4">
+                {tasks.map((task, index) => (
+                <motion.div 
+                    key={task.id} 
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}
+                    exit={{ opacity: 0, x: -50 }}
+                    className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-lg flex justify-between items-center transition-shadow hover:shadow-cyan-500/10"
+                >
+                    <div className="flex items-center flex-grow mr-4">
+                        <input
+                            type="checkbox"
+                            id={`task-${task.id}`}
+                            checked={task.is_completed}
+                            onChange={() => handleToggleTask(task.id, task.is_completed)}
+                            className="h-6 w-6 rounded-md border-gray-400 bg-transparent text-cyan-400 focus:ring-cyan-400 focus:ring-offset-0 mr-4 cursor-pointer flex-shrink-0"
+                        />
+                        <label 
+                            htmlFor={`task-${task.id}`}
+                            className={`flex-grow text-gray-100 cursor-pointer ${task.is_completed ? 'line-through text-gray-400' : ''}`}
+                        >
+                            {task.title}
+                        </label>
+                    </div>
+                    <div className="flex items-center flex-shrink-0">
+                        {task.due_date && (
+                            <span className={`text-sm mr-4 flex items-center ${
+                                isOverdue(task.due_date, task.is_completed) 
+                                ? 'text-red-400 font-semibold' 
+                                : 'text-gray-300'
+                            }`}>
+                                <CalendarIcon />
+                                {formatDueDate(task.due_date)}
+                            </span>
+                        )}
+                        <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-400 hover:!bg-red-500/20">
+                            <TrashIcon />
+                        </IconButton>
+                    </div>
+                </motion.div>
+                ))}
+            </motion.div>
+          </AnimatePresence>
         </main>
+
+        <motion.div
+            className="fixed bottom-8 right-8 z-30"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+        >
+            <IconButton onClick={() => setIsModalOpen(true)} aria-label="Add new task" className="!p-4 !rounded-2xl bg-cyan-500 hover:!bg-cyan-600 !text-white !shadow-2xl shadow-cyan-500/50">
+                <PlusIcon />
+            </IconButton>
+        </motion.div>
+
+        <AnimatePresence>
+            {isModalOpen && <TaskFormModal onClose={() => setIsModalOpen(false)} onTaskAdded={(task) => setTasks(prev => [task, ...prev])}/>}
+        </AnimatePresence>
     </div>
   );
 };

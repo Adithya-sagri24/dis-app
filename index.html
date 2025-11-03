@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>You Decide</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
     <script type="importmap">
     {
       "imports": {
@@ -28,17 +32,18 @@
     <style>
       body {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
           'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
           sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         
-        /* Consistent background gradient */
+        /* Consistent background gradient from the Moodora design prompt */
         min-height: 100vh;
-        background-color: #0f172a; /* fallback slate-900 */
-        background-image: linear-gradient(to bottom right, #111827, #0f172a, #000000);
-        color: #f3f4f6;
+        background-color: #0A1D37; /* fallback deep navy */
+        background-image: linear-gradient(to top, #0A1D37, #7BDFF2);
+        color: #F5F9FF; /* Soft White */
+        overflow: hidden; /* Prevent scrollbars from layout shifts */
       }
     </style>
 </head>

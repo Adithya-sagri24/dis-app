@@ -119,7 +119,7 @@ export const EmotionDetector: React.FC = () => {
   };
 
   return (
-    <div className="relative aspect-video w-full bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-lg">
+    <div className="relative aspect-video w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-2xl">
       <video
         ref={videoRef}
         autoPlay

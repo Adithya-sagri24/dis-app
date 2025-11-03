@@ -2,20 +2,23 @@ import { create } from 'zustand';
 
 type Mode = 'focus' | 'shortBreak' | 'longBreak';
 
+interface Durations {
+  focus: number;
+  shortBreak: number;
+  longBreak: number;
+}
+
 interface TimerState {
   mode: Mode;
   timeRemaining: number;
   isActive: boolean;
   pomodoros: number;
-  durations: {
-    focus: number;
-    shortBreak: number;
-    longBreak: number;
-  };
+  durations: Durations;
   setMode: (mode: Mode) => void;
   toggleIsActive: () => void;
   tick: () => void;
   resetTimer: () => void;
+  setDurations: (newDurations: Partial<Durations>) => void;
 }
 
 const POMODOROS_BEFORE_LONG_BREAK = 4;
@@ -62,7 +65,7 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
       if (mode === 'focus') {
         newPomodoros += 1;
-        if (newPomodoros % POMODOROS_BEFORE_LONG_BREAK === 0) {
+        if (newPomodoros > 0 && newPomodoros % POMODOROS_BEFORE_LONG_BREAK === 0) {
           nextMode = 'longBreak';
         } else {
           nextMode = 'shortBreak';
@@ -73,10 +76,22 @@ export const useTimerStore = create<TimerState>((set, get) => ({
 
       set({
         mode: nextMode,
-        isActive: false, // Or true for auto-start
+        isActive: false,
         timeRemaining: durations[nextMode],
         pomodoros: newPomodoros,
       });
     }
   },
+
+  setDurations: (newDurations) => {
+    const currentDurations = get().durations;
+    const updatedDurations = { ...currentDurations, ...newDurations };
+    set({ durations: updatedDurations });
+
+    // If the timer is not active, update the current timeRemaining to the new duration
+    if (!get().isActive) {
+        const currentMode = get().mode;
+        set({ timeRemaining: updatedDurations[currentMode] });
+    }
+  }
 }));

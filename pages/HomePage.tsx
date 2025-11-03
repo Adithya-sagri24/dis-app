@@ -3,7 +3,7 @@ import { PomodoroTimer } from '../components/PomodoroTimer';
 
 export const HomePage: React.FC = () => {
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full flex items-center justify-center">
       <PomodoroTimer />
     </div>
   );

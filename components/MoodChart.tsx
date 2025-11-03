@@ -15,7 +15,7 @@ const ChartLine: React.FC<{ data: number[]; color: string }> = ({ data, color })
     })
     .join(' ');
 
-  return <polyline fill="none" stroke={color} strokeWidth="2" points={points} />;
+  return <polyline fill="none" stroke={color} strokeWidth="2.5" points={points} filter="url(#glow)" />;
 };
 
 export const MoodChart: React.FC = () => {
@@ -24,31 +24,43 @@ export const MoodChart: React.FC = () => {
   const energyData = moodHistory.map(m => m.energy);
 
   return (
-    <div className="p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg">
-      <h3 className="text-xl font-semibold text-gray-200 mb-4">
+    <div className="p-6 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
+       <svg width="0" height="0">
+        <defs>
+            <filter id="glow">
+            <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+            <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+            </filter>
+        </defs>
+        </svg>
+
+      <h3 className="text-xl font-semibold text-gray-100 mb-4">
         Real-time Mood Summary
       </h3>
       {moodHistory.length < 2 ? (
-        <div className="h-40 flex items-center justify-center text-gray-400">
+        <div className="h-40 flex items-center justify-center text-gray-300">
           <p>Collecting mood data...</p>
         </div>
       ) : (
         <div className="space-y-4">
             <div>
                 <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="text-sm font-medium text-indigo-400">Valence (Pleasantness)</h4>
+                    <h4 className="text-sm font-medium" style={{color: '#7A7FFF'}}>Valence (Pleasantness)</h4>
                     <span className="text-xs text-gray-400">Last {moodHistory.length * 0.4}s</span>
                 </div>
                 <svg viewBox="0 0 300 80" className="w-full h-auto" preserveAspectRatio="none">
-                    <ChartLine data={valenceData} color="#818cf8" />
+                    <ChartLine data={valenceData} color="#7A7FFF" />
                 </svg>
             </div>
             <div>
                 <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="text-sm font-medium text-pink-400">Energy (Arousal)</h4>
+                    <h4 className="text-sm font-medium" style={{color: '#00E0FF'}}>Energy (Arousal)</h4>
                 </div>
                 <svg viewBox="0 0 300 80" className="w-full h-auto" preserveAspectRatio="none">
-                    <ChartLine data={energyData} color="#f472b6" />
+                    <ChartLine data={energyData} color="#00E0FF" />
                 </svg>
             </div>
         </div>
