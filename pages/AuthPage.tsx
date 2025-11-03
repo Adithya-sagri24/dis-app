@@ -41,17 +41,17 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-sm">
         <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
-            Moodora
+            <h1 className="text-4xl md:text-5xl font-bold text-white">
+              You Decide
             </h1>
-            <p className="text-lg text-gray-300 mt-2">
-            Your personal space for focus and clarity.
+            <p className="text-lg text-gray-400 mt-2">
+              Sign in to continue.
             </p>
         </header>
-        <div className="p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
+        <div className="p-8 bg-slate-800 rounded-xl shadow-lg">
           <form onSubmit={handleLogin}>
             <div className="space-y-4">
                 <input
@@ -60,7 +60,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     required
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    className="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
                     type="password"
@@ -68,14 +68,14 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     required
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                    className="w-full px-4 py-3 border border-slate-600 rounded-lg bg-slate-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
             </div>
             <div className="mt-6 space-y-4">
-                <Button onClick={handleLogin} disabled={loading} className="!bg-cyan-500 hover:!bg-cyan-600 focus:!ring-cyan-400">
+                <Button onClick={handleLogin} disabled={loading}>
                     {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
-                <Button onClick={handleSignUp} disabled={loading} className="!bg-pink-600 hover:!bg-pink-700 focus:!ring-pink-400">
+                <Button onClick={handleSignUp} disabled={loading} className="!bg-gray-600 hover:!bg-gray-700 focus:!ring-gray-400">
                     {loading ? 'Signing Up...' : 'Sign Up'}
                 </Button>
             </div>
@@ -83,14 +83,15 @@ export const AuthPage: React.FC = () => {
           </form>
 
             <div className="flex items-center text-center my-6">
-                <hr className="flex-grow border-white/20" />
-                <span className="px-4 text-gray-300 font-medium text-sm">OR</span>
-                <hr className="flex-grow border-white/20" />
+                <hr className="flex-grow border-slate-600" />
+                <span className="px-4 text-gray-400 font-medium text-sm">OR</span>
+                <hr className="flex-grow border-slate-600" />
             </div>
 
             <Button
               onClick={handleGoogleLogin}
               disabled={loading}
+               className="!bg-white hover:!bg-gray-200 !text-gray-800"
             >
               <div className="flex items-center justify-center">
                 <svg

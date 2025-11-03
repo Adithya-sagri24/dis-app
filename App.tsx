@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { AuthPage } from './pages/AuthPage';
-import { Layout } from './components/Layout';
+import { HomePage } from './pages/HomePage';
 import { getAccessToken, getProfile } from './lib/spotifyService';
 import { useAppStore } from './store/useAppStore';
 
@@ -48,7 +48,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App">
-      <Layout />
+      <HomePage />
     </div>
   );
 };

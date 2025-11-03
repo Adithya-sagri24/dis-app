@@ -4,7 +4,6 @@ import { Task } from '../types';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { Header } from '../components/ui/Header';
-import { IconButton } from '../components/ui/IconButton';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const TrashIcon = () => (
@@ -18,13 +17,6 @@ const CalendarIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
 );
-
-const PlusIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-    </svg>
-);
-
 
 // --- Helper Functions for Dates ---
 const isOverdue = (dueDate: string, isCompleted: boolean): boolean => {
@@ -42,7 +34,7 @@ const formatDueDate = (dueDate: string): string => {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
 
-const TaskFormModal: React.FC<{ onClose: () => void, onTaskAdded: (task: Task) => void }> = ({ onClose, onTaskAdded }) => {
+const TaskForm: React.FC<{ onTaskAdded: (task: Task) => void }> = ({ onTaskAdded }) => {
     const { user } = useAuth();
     const [title, setTitle] = useState('');
     const [dueDate, setDueDate] = useState('');
@@ -57,51 +49,40 @@ const TaskFormModal: React.FC<{ onClose: () => void, onTaskAdded: (task: Task) =
             .select()
             .single();
 
-        if (data) onTaskAdded(data);
-        onClose();
+        if (data) {
+            onTaskAdded(data);
+            setTitle('');
+            setDueDate('');
+        }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-            <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-md p-6 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl"
-            >
-                <h2 className="text-xl font-bold mb-4">Add New Task</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input
-                        type="text"
-                        placeholder="Task title..."
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-4 py-2 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                        autoFocus
-                    />
-                    <input
-                        type="date"
-                        value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                        className="w-full px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-gray-300 focus:outline-none focus:ring-2 focus:ring-cyan-400"
-                    />
-                    <div className="flex justify-end gap-4 pt-2">
-                        <Button onClick={onClose} className="w-auto px-6 !bg-transparent hover:!bg-white/10 border border-white/20">Cancel</Button>
-                        <Button onClick={handleSubmit} className="w-auto px-6" disabled={!title.trim()}>Add Task</Button>
-                    </div>
-                </form>
-            </motion.div>
-        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 mb-6 p-4 bg-slate-800 rounded-lg">
+            <input
+                type="text"
+                placeholder="Add a new task..."
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="flex-grow px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+            />
+            <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <Button onClick={handleSubmit} className="sm:w-auto" disabled={!title.trim()}>Add Task</Button>
+        </form>
     );
 };
+
 
 export const TaskManagerPage: React.FC = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchTasks = useCallback(async () => {
     if (!user) return;
@@ -149,6 +130,8 @@ export const TaskManagerPage: React.FC = () => {
         <Header title="Manage Your Tasks" subtitle="Stay organized and productive." />
 
         <main className="mt-8">
+            <TaskForm onTaskAdded={(task) => setTasks(prev => [task, ...prev.sort((a,b) => a.is_completed === b.is_completed ? 0 : a.is_completed ? 1 : -1)])}/>
+
           {loading && <p className="text-center text-gray-300">Loading tasks...</p>}
           {error && <p className="text-center text-red-400">{error}</p>}
           
@@ -157,12 +140,12 @@ export const TaskManagerPage: React.FC = () => {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-10 px-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl"
+                    className="text-center py-10 px-4 bg-slate-800 rounded-lg"
                 >
                     <p className="text-gray-200">You have no tasks yet. Add one to get started!</p>
                 </motion.div>
             )}
-            <motion.div layout className="space-y-4">
+            <motion.div layout className="space-y-3">
                 {tasks.map((task, index) => (
                 <motion.div 
                     key={task.id} 
@@ -170,7 +153,7 @@ export const TaskManagerPage: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0, transition: { delay: index * 0.05 } }}
                     exit={{ opacity: 0, x: -50 }}
-                    className="bg-white/10 backdrop-blur-xl border border-white/20 p-4 rounded-2xl shadow-lg flex justify-between items-center transition-shadow hover:shadow-cyan-500/10"
+                    className="bg-slate-800 p-4 rounded-lg shadow-md flex justify-between items-center"
                 >
                     <div className="flex items-center flex-grow mr-4">
                         <input
@@ -178,7 +161,7 @@ export const TaskManagerPage: React.FC = () => {
                             id={`task-${task.id}`}
                             checked={task.is_completed}
                             onChange={() => handleToggleTask(task.id, task.is_completed)}
-                            className="h-6 w-6 rounded-md border-gray-400 bg-transparent text-cyan-400 focus:ring-cyan-400 focus:ring-offset-0 mr-4 cursor-pointer flex-shrink-0"
+                            className="h-5 w-5 rounded-md border-gray-500 bg-slate-700 text-indigo-500 focus:ring-indigo-500 mr-4 cursor-pointer flex-shrink-0"
                         />
                         <label 
                             htmlFor={`task-${task.id}`}
@@ -198,29 +181,15 @@ export const TaskManagerPage: React.FC = () => {
                                 {formatDueDate(task.due_date)}
                             </span>
                         )}
-                        <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-400 hover:!bg-red-500/20">
+                        <button onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="p-2 rounded-full text-gray-400 hover:bg-red-500/20 hover:text-red-400 transition-colors">
                             <TrashIcon />
-                        </IconButton>
+                        </button>
                     </div>
                 </motion.div>
                 ))}
             </motion.div>
           </AnimatePresence>
         </main>
-
-        <motion.div
-            className="fixed bottom-8 right-8 z-30"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-        >
-            <IconButton onClick={() => setIsModalOpen(true)} aria-label="Add new task" className="!p-4 !rounded-2xl bg-cyan-500 hover:!bg-cyan-600 !text-white !shadow-2xl shadow-cyan-500/50">
-                <PlusIcon />
-            </IconButton>
-        </motion.div>
-
-        <AnimatePresence>
-            {isModalOpen && <TaskFormModal onClose={() => setIsModalOpen(false)} onTaskAdded={(task) => setTasks(prev => [task, ...prev])}/>}
-        </AnimatePresence>
     </div>
   );
 };
