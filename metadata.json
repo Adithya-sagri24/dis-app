@@ -1,4 +1,5 @@
 {
   "name": "You Decide",
-  "description": "A simple and elegant application to help you make a decision between two choices. It presents a question and two options, allowing you to see your choice clearly."
+  "description": "A simple and elegant application to help you make a decision between two choices. It presents a question and two options, allowing you to see your choice clearly.",
+  "requestFramePermissions": []
 }

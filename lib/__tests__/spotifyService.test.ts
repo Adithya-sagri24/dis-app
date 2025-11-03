@@ -1,110 +1,146 @@
 // Implemented unit tests for the Spotify service.
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { getRecommendations } from '../spotifyService';
+import { useAppStore } from '../../store/useAppStore';
 
 // Mocking global fetch
-global.fetch = vi.fn();
+// Fix: Replaced 'global' with 'window' which is appropriate for a jsdom environment.
+window.fetch = vi.fn();
+
+// Mocking the zustand store
+vi.mock('../../store/useAppStore');
+const mockUseAppStore = vi.mocked(useAppStore);
+
 
 describe('spotifyService', () => {
     
+  const mockTokens = {
+    access_token: 'test_token',
+    refresh_token: 'test_refresh_token',
+    expires_at: Date.now() + 3600 * 1000, // Expires in 1 hour
+  };
+  
   beforeEach(() => {
-    // Reset import.meta.env for each test to ensure isolation
-    vi.stubGlobal('import.meta', {
-        env: {
-          VITE_SPOTIFY_CLIENT_ID: 'test_client_id',
-          VITE_SPOTIFY_CLIENT_SECRET: 'test_client_secret',
-        },
+    // Mock the getState function to return our mock tokens
+    mockUseAppStore.getState = vi.fn().mockReturnValue({
+      spotifyTokens: mockTokens,
+      setSpotifyTokens: vi.fn(),
     });
+
+    vi.mocked(fetch).mockClear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    vi.mocked(fetch).mockClear();
   });
 
-  it('should fetch recommendations successfully', async () => {
-    // Mock the token response
-    vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ access_token: 'test_token' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-        })
-    );
-
-    // Mock the recommendations response
+  it('should fetch recommendations successfully without refreshing token', async () => {
     const mockTracks = { tracks: [{ id: '1', name: 'Test Track' }] };
     vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify(mockTracks), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-        })
-    );
-    
-    const recommendations = await getRecommendations(0.5, 0.8);
-
-    expect(fetch).toHaveBeenCalledTimes(2);
-
-    // Check token call
-    expect(fetch).toHaveBeenNthCalledWith(1,
-      'https://accounts.spotify.com/api/token',
-      expect.objectContaining({
-        method: 'POST',
-        body: 'grant_type=client_credentials',
+      new Response(JSON.stringify(mockTracks), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
       })
     );
-    
-    // Check recommendations call
+
+    const recommendations = await getRecommendations(0.5, 0.8);
+
+    // Should only be called once for the recommendations
+    expect(fetch).toHaveBeenCalledTimes(1);
+
     const expectedParams = new URLSearchParams({
-        limit: '10',
-        seed_genres: 'pop,rock,electronic,hip-hop,indie',
-        target_valence: '0.75', // (0.5 + 1) / 2
-        target_energy: '0.90', // (0.8 + 1) / 2
+      limit: '10',
+      seed_genres: 'pop,rock,electronic,hip-hop,indie',
+      target_valence: '0.75', // (0.5 + 1) / 2
+      target_energy: '0.90', // (0.8 + 1) / 2
     }).toString();
-    expect(fetch).toHaveBeenNthCalledWith(2,
+    expect(fetch).toHaveBeenCalledWith(
       `https://api.spotify.com/v1/recommendations?${expectedParams}`,
       expect.objectContaining({
-        headers: { Authorization: 'Bearer test_token' },
+        headers: { Authorization: `Bearer ${mockTokens.access_token}` },
       })
     );
 
     expect(recommendations).toEqual(mockTracks);
   });
 
-  it('should throw an error if fetching the access token fails', async () => {
+  it('should refresh token if expired and then fetch recommendations', async () => {
+    const expiredTokens = {
+        ...mockTokens,
+        expires_at: Date.now() - 1000 // Expired 1 second ago
+    };
+    const newTokensResponse = {
+        access_token: 'new_test_token',
+        expires_in: 3600
+    };
+    const setSpotifyTokensMock = vi.fn();
+    // For the first call inside `fetchWithAuth`, return the expired token
+    mockUseAppStore.getState = vi.fn().mockReturnValue({ 
+        spotifyTokens: expiredTokens, 
+        setSpotifyTokens: setSpotifyTokensMock 
+    });
+
+
+    // Mock the refresh token response
     vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ error_description: 'Invalid credentials' }), { status: 400 })
+        new Response(JSON.stringify(newTokensResponse), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+        })
+    );
+    
+    // Mock the recommendations response
+    const mockTracks = { tracks: [{ id: '1', name: 'Test Track' }] };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(mockTracks), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
     );
 
-    await expect(getRecommendations(0.5, 0.8)).rejects.toThrow(
-      'Failed to get Spotify token: Invalid credentials'
+    await getRecommendations(0.5, 0.8);
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+
+    // Check refresh call
+    expect(fetch).toHaveBeenNthCalledWith(1,
+      'https://accounts.spotify.com/api/token',
+      expect.objectContaining({
+        method: 'POST',
+      })
+    );
+    expect(setSpotifyTokensMock).toHaveBeenCalled();
+
+    // Check recommendations call
+    const expectedParams = new URLSearchParams({
+      limit: '10',
+      seed_genres: 'pop,rock,electronic,hip-hop,indie',
+      target_valence: '0.75',
+      target_energy: '0.90',
+    }).toString();
+    expect(fetch).toHaveBeenNthCalledWith(2,
+      `https://api.spotify.com/v1/recommendations?${expectedParams}`,
+      expect.objectContaining({
+        headers: { Authorization: `Bearer ${newTokensResponse.access_token}` },
+      })
     );
   });
 
-  it('should throw an error if fetching recommendations fails', async () => {
-    // Mock successful token response
-    vi.mocked(fetch).mockResolvedValueOnce(
-        new Response(JSON.stringify({ access_token: 'test_token' }), { status: 200 })
+  it('should throw an error if not authenticated', async () => {
+     mockUseAppStore.getState = vi.fn().mockReturnValue({ spotifyTokens: null });
+
+    await expect(getRecommendations(0.5, 0.8)).rejects.toThrow(
+      'Not authenticated with Spotify.'
     );
-    // Mock failed recommendations response
+  });
+  
+  it('should throw an error if fetching recommendations fails', async () => {
     vi.mocked(fetch).mockResolvedValueOnce(
         new Response(null, { status: 500, statusText: 'Server Error' })
     );
     
     await expect(getRecommendations(0.5, 0.8)).rejects.toThrow(
-      'Failed to fetch Spotify recommendations.'
-    );
-  });
-  
-  it('should throw an error if Spotify credentials are not configured', async () => {
-     vi.stubGlobal('import.meta', {
-        env: {
-          VITE_SPOTIFY_CLIENT_ID: '',
-          VITE_SPOTIFY_CLIENT_SECRET: '',
-        },
-     });
-
-    await expect(getRecommendations(0.5, 0.8)).rejects.toThrow(
-      'Spotify API credentials are not configured in environment variables.'
+      'Spotify API request failed: Server Error'
     );
   });
 });

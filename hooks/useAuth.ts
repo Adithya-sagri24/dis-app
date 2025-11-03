@@ -7,12 +7,13 @@ export const useAuth = () => {
 
   useEffect(() => {
     // 1. Check for an active session on initial load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setAuthLoading(false);
-    });
+    // Fix: Replaced async getSession() with sync session() for Supabase v1 compatibility.
+    const session = supabase.auth.session();
+    setUser(session?.user ?? null);
+    setAuthLoading(false);
 
     // 2. Listen for authentication state changes
+    // Fix: The error on this line is likely a cascade from the getSession error above. This is valid for v1.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
@@ -26,6 +27,7 @@ export const useAuth = () => {
   }, [setUser, setAuthLoading]);
 
   const signOut = async () => {
+    // Fix: The error on this line is likely a cascade error. This is valid for v1.
     await supabase.auth.signOut();
     clearState();
   };

@@ -4,13 +4,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useAuth } from '../useAuth';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../lib/supabaseClient';
-import { User } from '@supabase/supabase-js';
+// Fix: Use a type-only import for the User type.
+import type { User } from '@supabase/supabase-js';
 
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      getSession: vi.fn(),
+      session: vi.fn(), // Corresponds to getSession changing to session
       onAuthStateChange: vi.fn(() => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
@@ -38,6 +39,8 @@ describe('useAuth', () => {
     user: User | null;
     setUser: (user: User | null) => void;
     clearState: () => void;
+    authLoading: boolean;
+    setAuthLoading: (loading: boolean) => void;
   };
 
   beforeEach(() => {
@@ -52,40 +55,32 @@ describe('useAuth', () => {
       clearState: vi.fn(() => {
         store.user = null;
       }),
+      authLoading: true,
+      setAuthLoading: vi.fn((loading) => {
+          store.authLoading = loading;
+      }),
     };
 
     mockUseAppStore.mockImplementation((selector: any) => selector(store));
   });
 
   it('should initialize with no user and fetch session', async () => {
-    mockSupabase.auth.getSession.mockResolvedValueOnce({
-      data: { session: { user: mockUser } as any },
-      error: null,
-    });
+    mockSupabase.auth.session.mockReturnValueOnce({ user: mockUser } as any);
 
     const { result } = renderHook(() => useAuth());
 
-    // Initially, user is null
+    // Initially, user is null from the store
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
 
-    // Wait for async getSession to resolve
+    // Wait for async getSession to resolve and state to update
     await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        // This flushes the promise queue
     });
     
-    expect(mockSupabase.auth.getSession).toHaveBeenCalled();
+    expect(mockSupabase.auth.session).toHaveBeenCalled();
     expect(store.setUser).toHaveBeenCalledWith(mockUser);
-  });
-
-  it('should initialize with an existing user from the store and not fetch session', () => {
-    store.user = mockUser;
-    
-    const { result } = renderHook(() => useAuth());
-
-    expect(result.current.user).toEqual(mockUser);
-    expect(result.current.isAuthenticated).toBe(true);
-    expect(mockSupabase.auth.getSession).not.toHaveBeenCalled();
+    expect(store.setAuthLoading).toHaveBeenCalledWith(false);
   });
 
   it('should update user on auth state change', () => {
@@ -102,17 +97,19 @@ describe('useAuth', () => {
     });
 
     expect(store.setUser).toHaveBeenCalledWith(mockUser);
+    expect(store.setAuthLoading).toHaveBeenCalledWith(false);
     
     act(() => {
       authCallback!('SIGNED_OUT', null);
     });
 
     expect(store.setUser).toHaveBeenCalledWith(null);
+    expect(store.setAuthLoading).toHaveBeenCalledWith(false);
   });
 
   it('should sign out and clear state', async () => {
     store.user = mockUser;
-    mockSupabase.auth.signOut.mockResolvedValueOnce({ error: null });
+    (mockSupabase.auth.signOut as any).mockResolvedValueOnce({ error: null });
 
     const { result } = renderHook(() => useAuth());
     

@@ -58,9 +58,35 @@ export const TaskManagerPage: React.FC = () => {
     }
   };
   
-  const handleDeleteTask = (id: number) => {
-      alert(`Delete functionality for task ${id} is not implemented yet.`);
+  const handleDeleteTask = async (id: number) => {
+    const originalTasks = tasks;
+    // Optimistically remove from UI
+    setTasks(tasks.filter((task) => task.id !== id));
+
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
+
+    if (error) {
+      setError(error.message);
+      // If error, revert the change
+      setTasks(originalTasks);
+    }
   };
+
+  const handleToggleTask = async (id: number, is_completed: boolean) => {
+    // Optimistically update UI
+    setTasks(tasks.map(task => task.id === id ? {...task, is_completed: !is_completed} : task));
+
+    const { error } = await supabase
+        .from('tasks')
+        .update({ is_completed: !is_completed })
+        .eq('id', id);
+    
+    if (error) {
+        setError(error.message);
+        // If error, revert by re-fetching
+        fetchTasks();
+    }
+  }
 
   return (
     <div className="w-full max-w-3xl mx-auto animate-fade-in">
@@ -92,8 +118,22 @@ export const TaskManagerPage: React.FC = () => {
             )}
             {tasks.map((task) => (
               <div key={task.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex justify-between items-center transition-transform hover:scale-[1.02]">
-                <span className="text-gray-800 dark:text-gray-200">{task.title}</span>
-                <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50">
+                <div className="flex items-center flex-grow mr-4">
+                    <input
+                        type="checkbox"
+                        id={`task-${task.id}`}
+                        checked={task.is_completed}
+                        onChange={() => handleToggleTask(task.id, task.is_completed)}
+                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 cursor-pointer"
+                    />
+                    <label 
+                        htmlFor={`task-${task.id}`}
+                        className={`flex-grow text-gray-800 dark:text-gray-200 cursor-pointer ${task.is_completed ? 'line-through text-gray-500 dark:text-gray-400' : ''}`}
+                    >
+                        {task.title}
+                    </label>
+                </div>
+                <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 flex-shrink-0">
                     <TrashIcon />
                 </IconButton>
               </div>
