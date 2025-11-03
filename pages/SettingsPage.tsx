@@ -14,12 +14,12 @@ export const SettingsPage: React.FC = () => {
         <div className="animate-fade-in">
             <Header title="Settings" subtitle="Manage your account and application settings." />
             
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-2xl">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Privacy Settings</h2>
-                <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
+            <div className="mt-8 p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg max-w-2xl">
+                <h2 className="text-xl font-semibold mb-4 text-gray-200">Privacy Settings</h2>
+                <div className="flex items-center justify-between p-4 border border-white/10 rounded-lg">
                     <div>
-                        <label htmlFor="mood-logging" className="font-medium text-gray-700 dark:text-gray-300">Enable Mood Logging</label>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <label htmlFor="mood-logging" className="font-medium text-gray-200">Enable Mood Logging</label>
+                        <p className="text-sm text-gray-400">
                             Allow the application to save your mood data for analytics.
                         </p>
                     </div>
@@ -31,24 +31,24 @@ export const SettingsPage: React.FC = () => {
                             checked={logMoodData}
                             onChange={handleToggle}
                         />
-                        <div className="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                        <div className="w-11 h-6 bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
                     </label>
                 </div>
 
                 <div className="mt-6">
-                    <a href="#/privacy" className="text-blue-600 hover:underline dark:text-blue-400">
+                    <a href="#/privacy" className="text-sky-400 hover:underline">
                         View our full Privacy Policy
                     </a>
                 </div>
             </div>
 
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-2xl">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Connected Services</h2>
+            <div className="mt-8 p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg max-w-2xl">
+                <h2 className="text-xl font-semibold mb-4 text-gray-200">Connected Services</h2>
                 {spotifyUser ? (
-                    <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-white/10 rounded-lg">
                         <div>
-                            <p className="font-medium text-gray-700 dark:text-gray-300">Spotify</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="font-medium text-gray-200">Spotify</p>
+                            <p className="text-sm text-gray-400">
                                 Connected as {spotifyUser.display_name}
                             </p>
                         </div>
@@ -57,8 +57,8 @@ export const SettingsPage: React.FC = () => {
                         </Button>
                     </div>
                 ) : (
-                    <p className="text-gray-500 dark:text-gray-400">
-                        Spotify is not connected. Connect it from the <a href="#/mood" className="text-blue-600 hover:underline dark:text-blue-400">Mood</a> page.
+                    <p className="text-gray-400">
+                        Spotify is not connected. Connect it from the <a href="#/mood" className="text-sky-400 hover:underline">Mood</a> page.
                     </p>
                 )}
             </div>

@@ -7,14 +7,14 @@ import { WeeklyMoodSummary, Mood } from '../types';
 
 const BarChart: React.FC<{ data: WeeklyMoodSummary[] }> = ({ data }) => {
     return (
-        <div className="h-64 flex justify-around items-end gap-2 p-4 border dark:border-gray-700 rounded-lg">
+        <div className="h-64 flex justify-around items-end gap-2 p-4 border border-white/10 rounded-lg">
             {data.map(({ day, avg_valence, avg_energy }) => (
                 <div key={day} className="flex-1 flex flex-col items-center gap-1">
                     <div className="flex items-end h-full w-full max-w-[40px] gap-1">
                         <div className="w-1/2 bg-indigo-400 rounded-t" title={`Valence: ${avg_valence.toFixed(2)}`} style={{ height: `${((avg_valence + 1) / 2) * 100}%` }}></div>
                         <div className="w-1/2 bg-pink-400 rounded-t" title={`Energy: ${avg_energy.toFixed(2)}`} style={{ height: `${((avg_energy + 1) / 2) * 100}%` }}></div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{day.substring(0, 3)}</p>
+                    <p className="text-xs text-gray-400">{day.substring(0, 3)}</p>
                 </div>
             ))}
         </div>
@@ -63,18 +63,18 @@ export const AnalyticsPage: React.FC = () => {
         <div className="animate-fade-in">
             <Header title="Analytics" subtitle="Review your mood patterns and export your data." />
 
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-4xl">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Weekly Summary</h2>
-                {loading ? <p>Loading summary...</p> : <BarChart data={summary} />}
-                <div className="flex gap-4 mt-4 text-sm">
+            <div className="mt-8 p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg max-w-4xl">
+                <h2 className="text-xl font-semibold mb-4 text-gray-200">Weekly Summary</h2>
+                {loading ? <p className="text-gray-300">Loading summary...</p> : <BarChart data={summary} />}
+                <div className="flex gap-4 mt-4 text-sm text-gray-300">
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-indigo-400 rounded-sm"></div>Valence</div>
                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-pink-400 rounded-sm"></div>Energy</div>
                 </div>
             </div>
 
-             <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-4xl">
-                <h2 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-200">Data Export</h2>
-                <p className="mb-4 text-gray-600 dark:text-gray-400">Download your entire mood history as a CSV file.</p>
+             <div className="mt-8 p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg max-w-4xl">
+                <h2 className="text-xl font-semibold mb-2 text-gray-200">Data Export</h2>
+                <p className="mb-4 text-gray-400">Download your entire mood history as a CSV file.</p>
                 <Button onClick={handleExport} className="w-auto px-6">
                     Export to CSV
                 </Button>

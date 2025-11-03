@@ -24,31 +24,31 @@ export const MoodChart: React.FC = () => {
   const energyData = moodHistory.map(m => m.energy);
 
   return (
-    <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-      <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+    <div className="p-6 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg">
+      <h3 className="text-xl font-semibold text-gray-200 mb-4">
         Real-time Mood Summary
       </h3>
       {moodHistory.length < 2 ? (
-        <div className="h-40 flex items-center justify-center text-gray-500 dark:text-gray-400">
+        <div className="h-40 flex items-center justify-center text-gray-400">
           <p>Collecting mood data...</p>
         </div>
       ) : (
         <div className="space-y-4">
             <div>
                 <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="text-sm font-medium text-indigo-600 dark:text-indigo-400">Valence (Pleasantness)</h4>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Last {moodHistory.length * 0.4}s</span>
+                    <h4 className="text-sm font-medium text-indigo-400">Valence (Pleasantness)</h4>
+                    <span className="text-xs text-gray-400">Last {moodHistory.length * 0.4}s</span>
                 </div>
                 <svg viewBox="0 0 300 80" className="w-full h-auto" preserveAspectRatio="none">
-                    <ChartLine data={valenceData} color="#4f46e5" />
+                    <ChartLine data={valenceData} color="#818cf8" />
                 </svg>
             </div>
             <div>
                 <div className="flex justify-between items-baseline mb-1">
-                    <h4 className="text-sm font-medium text-pink-600 dark:text-pink-400">Energy (Arousal)</h4>
+                    <h4 className="text-sm font-medium text-pink-400">Energy (Arousal)</h4>
                 </div>
                 <svg viewBox="0 0 300 80" className="w-full h-auto" preserveAspectRatio="none">
-                    <ChartLine data={energyData} color="#db2777" />
+                    <ChartLine data={energyData} color="#f472b6" />
                 </svg>
             </div>
         </div>

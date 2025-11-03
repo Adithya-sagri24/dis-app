@@ -14,12 +14,6 @@ const MenuIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-const ResetIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5m10.5-5.5a9 9 0 11-13.98 4.98" />
-  </svg>
-);
-
 const Bubbles: React.FC = React.memo(() => {
     const bubbles = useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
         id: i,
@@ -245,12 +239,12 @@ export const PomodoroTimer: React.FC = () => {
                     e.stopPropagation(); // Prevent toggling timer when clicking reset
                     resetTimer();
                 }}
-                className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-4 py-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium uppercase tracking-widest"
                 aria-label="Reset timer"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
             >
-                <ResetIcon className="w-6 h-6" />
+                Reset
             </motion.button>
           </div>
         </div>

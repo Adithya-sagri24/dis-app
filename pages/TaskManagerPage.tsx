@@ -124,21 +124,21 @@ export const TaskManagerPage: React.FC = () => {
     <div className="w-full max-w-3xl mx-auto animate-fade-in">
         <Header title="Manage Your Tasks" subtitle="Stay organized and productive." />
 
-        <main>
-          <form onSubmit={handleAddTask} className="mb-8 p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg flex flex-wrap sm:flex-nowrap gap-3">
+        <main className="mt-8">
+          <form onSubmit={handleAddTask} className="mb-8 p-4 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg flex flex-wrap sm:flex-nowrap gap-3">
             <input
               type="text"
               placeholder="Add a new task..."
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
-              className="flex-grow px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto"
+              className="flex-grow px-4 py-2 border border-white/20 rounded-lg bg-white/10 placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-sky-400 w-full sm:w-auto"
               aria-label="New task title"
             />
             <input
                 type="date"
                 value={newDueDate}
                 onChange={(e) => setNewDueDate(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-500 dark:text-gray-400"
+                className="px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-gray-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                 aria-label="Due date"
             />
             <Button onClick={handleAddTask} className="w-full sm:w-auto px-6" disabled={!newTaskTitle.trim()}>
@@ -146,28 +146,28 @@ export const TaskManagerPage: React.FC = () => {
             </Button>
           </form>
 
-          {loading && <p className="text-center text-gray-500 dark:text-gray-400">Loading tasks...</p>}
-          {error && <p className="text-center text-red-500">{error}</p>}
+          {loading && <p className="text-center text-gray-300">Loading tasks...</p>}
+          {error && <p className="text-center text-red-400">{error}</p>}
           
           <div className="space-y-4">
             {!loading && tasks.length === 0 && (
-                <div className="text-center py-10 px-4 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
-                    <p className="text-gray-500 dark:text-gray-400">You have no tasks yet. Add one above to get started!</p>
+                <div className="text-center py-10 px-4 bg-black/20 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg">
+                    <p className="text-gray-300">You have no tasks yet. Add one above to get started!</p>
                 </div>
             )}
             {tasks.map((task) => (
-              <div key={task.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md flex justify-between items-center transition-transform hover:scale-[1.02]">
+              <div key={task.id} className="bg-black/20 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-md flex justify-between items-center transition-transform hover:scale-[1.02]">
                 <div className="flex items-center flex-grow mr-4">
                     <input
                         type="checkbox"
                         id={`task-${task.id}`}
                         checked={task.is_completed}
                         onChange={() => handleToggleTask(task.id, task.is_completed)}
-                        className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3 cursor-pointer flex-shrink-0"
+                        className="h-5 w-5 rounded border-gray-400 bg-transparent text-sky-400 focus:ring-sky-400 mr-3 cursor-pointer flex-shrink-0"
                     />
                     <label 
                         htmlFor={`task-${task.id}`}
-                        className={`flex-grow text-gray-800 dark:text-gray-200 cursor-pointer ${task.is_completed ? 'line-through text-gray-500 dark:text-gray-400' : ''}`}
+                        className={`flex-grow text-gray-200 cursor-pointer ${task.is_completed ? 'line-through text-gray-400' : ''}`}
                     >
                         {task.title}
                     </label>
@@ -176,14 +176,14 @@ export const TaskManagerPage: React.FC = () => {
                     {task.due_date && (
                         <span className={`text-sm mr-4 flex items-center ${
                             isOverdue(task.due_date, task.is_completed) 
-                            ? 'text-red-500 dark:text-red-400 font-semibold' 
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-red-400 font-semibold' 
+                            : 'text-gray-400'
                         }`}>
                             <CalendarIcon />
                             {formatDueDate(task.due_date)}
                         </span>
                     )}
-                    <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50">
+                    <IconButton onClick={() => handleDeleteTask(task.id)} aria-label="Delete task" className="text-red-400 hover:bg-red-500/20">
                         <TrashIcon />
                     </IconButton>
                 </div>
