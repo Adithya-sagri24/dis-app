@@ -6,7 +6,7 @@ export const PrivacyPage: React.FC = () => {
         <div className="animate-fade-in">
             <Header title="Privacy Policy" subtitle="Your privacy is important to us." />
             
-            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-3xl prose dark:prose-invert">
+            <div className="mt-8 p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl max-w-3xl prose prose-invert prose-p:text-gray-300 prose-headings:text-white prose-strong:text-white prose-a:text-cyan-400 hover:prose-a:text-cyan-300">
                 <h2>Our Commitment</h2>
                 <p>We are committed to protecting your privacy. This policy explains what data we collect, why we collect it, and how we handle it.</p>
 

@@ -57,7 +57,8 @@ export const PomodoroTimer: React.FC = () => {
   const playChime = useAudio('https://cdn.pixabay.com/audio/2021/08/04/audio_bb630282b0.mp3'); // Gentle chime sound
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    // Fix: Replaced NodeJS.Timeout with ReturnType<typeof setInterval> to use the correct type for the interval ID in a browser environment, resolving the 'Cannot find namespace NodeJS' error.
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isActive && timeRemaining > 0) {
       interval = setInterval(() => tick(), 1000);
     } else if (isActive && timeRemaining <= 0) {

@@ -41,17 +41,17 @@ export const AuthPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-md">
         <header className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-            You Decide
+            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500">
+            Moodora
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-            Sign in to manage your tasks.
+            <p className="text-lg text-gray-300 mt-2">
+            Your personal space for focus and clarity.
             </p>
         </header>
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+        <div className="p-8 bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
           <form onSubmit={handleLogin}>
             <div className="space-y-4">
                 <input
@@ -60,7 +60,7 @@ export const AuthPage: React.FC = () => {
                     value={email}
                     required
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
                 <input
                     type="password"
@@ -68,30 +68,29 @@ export const AuthPage: React.FC = () => {
                     value={password}
                     required
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-white/20 rounded-lg bg-white/10 placeholder-gray-300 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
                 />
             </div>
             <div className="mt-6 space-y-4">
-                <Button onClick={handleLogin} disabled={loading}>
+                <Button onClick={handleLogin} disabled={loading} className="!bg-cyan-500 hover:!bg-cyan-600 focus:!ring-cyan-400">
                     {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
-                <Button onClick={handleSignUp} disabled={loading} className="bg-pink-600 hover:bg-pink-700 focus:ring-pink-300">
+                <Button onClick={handleSignUp} disabled={loading} className="!bg-pink-600 hover:!bg-pink-700 focus:!ring-pink-400">
                     {loading ? 'Signing Up...' : 'Sign Up'}
                 </Button>
             </div>
-            {error && <p className="mt-4 text-center text-red-500">{error}</p>}
+            {error && <p className="mt-4 text-center text-red-400">{error}</p>}
           </form>
 
             <div className="flex items-center text-center my-6">
-                <hr className="flex-grow border-gray-300 dark:border-gray-600" />
-                <span className="px-4 text-gray-500 dark:text-gray-400 font-medium text-sm">OR</span>
-                <hr className="flex-grow border-gray-300 dark:border-gray-600" />
+                <hr className="flex-grow border-white/20" />
+                <span className="px-4 text-gray-300 font-medium text-sm">OR</span>
+                <hr className="flex-grow border-white/20" />
             </div>
 
             <Button
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
             >
               <div className="flex items-center justify-center">
                 <svg
@@ -99,12 +98,13 @@ export const AuthPage: React.FC = () => {
                   viewBox="0 0 48 48"
                   width="24px"
                   height="24px"
+                  className="mr-3"
                 >
                   <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12s5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
                   <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
                   <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.658-3.317-11.28-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
                 </svg>
-                <span className="ml-3 font-medium">Sign in with Google</span>
+                <span className="font-medium">Sign in with Google</span>
               </div>
             </Button>
         </div>
