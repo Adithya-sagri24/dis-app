@@ -9,15 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "@supabase/supabase-js": "^2.45.0",
-    "zustand": "^4.5.4",
-    "@google/genai": "^1.28.0",
+    "zustand": "^5.0.8",
+    "react": "^19.2.0",
     "vitest": "^4.0.6",
-    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
-    "framer-motion": "^11.3.19"
+    "@testing-library/jest-dom": "^6.9.1",
+    "@supabase/supabase-js": "^2.78.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
