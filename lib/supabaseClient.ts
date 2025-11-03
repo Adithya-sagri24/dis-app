@@ -1,3 +1,6 @@
+// Fix: Add reference to Vite client types to inform TypeScript about `import.meta.env`.
+/// <reference types="vite/client" />
+
 // Fix: Augment the global ImportMetaEnv interface to include environment variables from .env files, preventing type conflicts with Vite's client types.
 declare global {
   interface ImportMetaEnv {
