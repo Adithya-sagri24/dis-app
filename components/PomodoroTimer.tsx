@@ -1,53 +1,64 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTimerStore } from '../store/useTimerStore';
+import { Navbar } from './Navbar';
 
 // A gentle chime sound to play when the timer completes.
 const NOTIFICATION_SOUND_URL = 'https://assets.mixkit.co/sfx/preview/mixkit-positive-notification-951.mp3';
 
-// --- Helper Components for Visual Effects ---
+// --- Helper Components for Visual Effects & UI ---
 
-/**
- * Renders a collection of animated bubbles rising from the bottom of the screen.
- * Each bubble has a randomized size, position, and animation duration for a natural look.
- */
-const Bubbles: React.FC = () => (
-  <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-    {Array.from({ length: 15 }).map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute bottom-[-20px] bg-white/10 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          width: `${5 + Math.random() * 20}px`,
-          height: `${5 + Math.random() * 20}px`,
-        }}
-        initial={{ y: 0, opacity: 1 }}
-        animate={{ y: '-100vh', opacity: 0 }}
-        transition={{
-          duration: 15 + Math.random() * 20,
-          repeat: Infinity,
-          repeatType: 'loop',
-          delay: Math.random() * 25,
-          ease: 'linear',
-        }}
-      />
-    ))}
-  </div>
+const MenuIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} stroke="currentColor" fill="none" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
 );
 
-/**
- * Renders multiple layers of animated SVG waves.
- * The entire wave container's vertical position is controlled by the timer's progress.
- * @param {number} progress - The timer progress from 1 (full) to 0 (empty).
- */
+const ResetIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5m10.5-5.5a9 9 0 11-13.98 4.98" />
+  </svg>
+);
+
+const Bubbles: React.FC = React.memo(() => {
+    const bubbles = useMemo(() => Array.from({ length: 20 }).map((_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        size: `${5 + Math.random() * 20}px`,
+        duration: 15 + Math.random() * 20,
+        delay: Math.random() * 25,
+    })), []);
+
+    return (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+            {bubbles.map(bubble => (
+                <motion.div
+                    key={bubble.id}
+                    className="absolute bottom-[-20px] bg-white/10 rounded-full"
+                    style={{ left: bubble.left, width: bubble.size, height: bubble.size }}
+                    initial={{ y: 0, opacity: 1 }}
+                    animate={{ y: '-100vh', opacity: 0 }}
+                    transition={{
+                        duration: bubble.duration,
+                        repeat: Infinity,
+                        repeatType: 'loop',
+                        delay: bubble.delay,
+                        ease: 'linear',
+                    }}
+                />
+            ))}
+        </div>
+    );
+});
+
+
 const Waves: React.FC<{ progress: number }> = ({ progress }) => {
   const wavePaths = [
     "M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z",
     "M-160 22c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z",
     "M-160 66c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z",
   ];
-  const opacities = [0.2, 0.3, 0.4];
+  const opacities = [0.1, 0.15, 0.2];
   const durations = [18, 15, 12];
 
   return (
@@ -57,13 +68,12 @@ const Waves: React.FC<{ progress: number }> = ({ progress }) => {
       animate={{ y: `${(1 - progress) * 100}%` }}
       transition={{ duration: 1, ease: "easeInOut" }}
     >
-        {/* Container for the waves themselves */}
         <div className="absolute bottom-0 left-0 w-full h-[20vh] min-h-[120px]">
             {wavePaths.map((path, i) => (
             <svg key={i} className="absolute bottom-0 w-[200%] h-full" viewBox="0 0 176 44" preserveAspectRatio="none">
                 <motion.path
                 d={path}
-                fill={`rgba(0, 255, 255, ${opacities[i]})`}
+                fill={`rgba(255, 255, 255, ${opacities[i]})`}
                 initial={{ x: 0 }}
                 animate={{ x: -176 }}
                 transition={{
@@ -81,9 +91,6 @@ const Waves: React.FC<{ progress: number }> = ({ progress }) => {
 };
 
 
-/**
- * A subtle, shimmering light effect that animates across the water's surface.
- */
 const LightReflection: React.FC = () => (
     <motion.div
       className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20 mix-blend-soft-light"
@@ -103,30 +110,26 @@ const LightReflection: React.FC = () => (
     />
 );
 
-
-/**
- * Renders the glassmorphic mode selection buttons (Pomodoro, Short Break, Long Break).
- */
 const ModeSelector: React.FC = () => {
   const { mode, setMode } = useTimerStore(state => ({ mode: state.mode, setMode: state.setMode }));
   const modes: Array<'focus' | 'shortBreak' | 'longBreak'> = ['focus', 'shortBreak', 'longBreak'];
   const labels: Record<typeof modes[number], string> = { focus: 'Pomodoro', shortBreak: 'Short Break', longBreak: 'Long Break' };
 
   return (
-    <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-black/20 backdrop-blur-md rounded-full shadow-lg z-20">
+    <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 p-1 bg-sky-900/40 backdrop-blur-lg rounded-full shadow-lg z-20">
       {modes.map(m => (
         <button
           key={m}
           onClick={() => setMode(m)}
-          className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-300 ${
-            mode === m ? 'text-white' : 'text-blue-100/80 hover:text-white'
+          className={`relative px-5 py-1.5 rounded-full text-sm font-bold transition-colors duration-300 ${
+            mode === m ? 'text-white' : 'text-sky-200/80 hover:text-white'
           }`}
           aria-pressed={mode === m}
         >
           {mode === m && (
             <motion.div
               layoutId="active-pill"
-              className="absolute inset-0 bg-white/20 rounded-full"
+              className="absolute inset-0 bg-black/20 rounded-full"
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
           )}
@@ -140,23 +143,23 @@ const ModeSelector: React.FC = () => {
 // --- Main Pomodoro Timer Component ---
 
 export const PomodoroTimer: React.FC = () => {
-  const { mode, timeRemaining, isActive, durations, tick, toggleIsActive } = useTimerStore();
+  const { mode, timeRemaining, isActive, durations, tick, toggleIsActive, resetTimer } = useTimerStore();
+  const [isNavOpen, setIsNavOpen] = useState(false);
   
-  // Memoize the Audio object to prevent re-creation on every render.
   const notificationSound = useMemo(() => new Audio(NOTIFICATION_SOUND_URL), []);
 
-  // Effect to handle the timer countdown interval.
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    if (isActive) {
+    if (isActive && timeRemaining > 0) {
       interval = setInterval(() => tick(), 1000);
+    } else if (isActive && timeRemaining === 0) {
+        tick(); // Trigger mode switch
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isActive, tick]);
+  }, [isActive, tick, timeRemaining]);
 
-  // Effect to play a notification sound when the timer reaches zero.
   useEffect(() => {
     if (timeRemaining === 0 && isActive) {
       notificationSound.play().catch(e => console.error("Error playing sound:", e));
@@ -164,7 +167,6 @@ export const PomodoroTimer: React.FC = () => {
   }, [timeRemaining, isActive, notificationSound]);
 
   const totalDuration = durations[mode];
-  // Ensure progress doesn't divide by zero if a duration is ever not set.
   const progress = totalDuration > 0 ? timeRemaining / totalDuration : 0;
 
   const formatTime = (seconds: number): string => {
@@ -175,11 +177,45 @@ export const PomodoroTimer: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-b from-[#87CEEB] to-[#0A1F44] overflow-hidden text-white font-['Poppins',_sans-serif]">
+      <AnimatePresence>
+        {isNavOpen && (
+            <>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="fixed inset-0 bg-black/50 z-30"
+                    onClick={() => setIsNavOpen(false)}
+                    aria-hidden="true"
+                />
+                <motion.div
+                    initial={{ x: '-100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '-100%' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    className="fixed top-0 left-0 h-full z-40"
+                    // Pass a function to Navbar to close itself on link click
+                    onClick={() => setIsNavOpen(false)}
+                >
+                    <Navbar activeRoute="#/home" />
+                </motion.div>
+            </>
+        )}
+      </AnimatePresence>
+
       <Waves progress={progress} />
       <LightReflection />
       <Bubbles />
       
       <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
+        <button 
+            onClick={() => setIsNavOpen(true)}
+            className="absolute top-6 left-6 z-20 p-2.5 bg-black/20 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-colors"
+            aria-label="Open navigation menu"
+        >
+            <MenuIcon className="w-6 h-6" />
+        </button>
         <ModeSelector />
 
         <div 
@@ -191,18 +227,32 @@ export const PomodoroTimer: React.FC = () => {
           <h1 className="font-bold text-7xl sm:text-8xl md:text-9xl tracking-wider" style={{ textShadow: '0 0 20px rgba(0,255,255,0.4)' }}>
             {formatTime(timeRemaining)}
           </h1>
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={isActive ? 'pause' : 'play'}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 0.7 }}
-              exit={{ y: -20, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-4 text-lg font-medium tracking-widest uppercase"
+          <div className="flex items-center justify-center gap-4 mt-4 h-10">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={isActive ? 'pause' : 'play'}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 0.7 }}
+                exit={{ y: -20, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="text-lg font-medium tracking-widest uppercase"
+              >
+                {isActive ? 'Pause' : 'Start'}
+              </motion.p>
+            </AnimatePresence>
+             <motion.button
+                onClick={(e) => {
+                    e.stopPropagation(); // Prevent toggling timer when clicking reset
+                    resetTimer();
+                }}
+                className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Reset timer"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
             >
-              {isActive ? 'Pause' : 'Start'}
-            </motion.p>
-          </AnimatePresence>
+                <ResetIcon className="w-6 h-6" />
+            </motion.button>
+          </div>
         </div>
       </div>
     </div>
