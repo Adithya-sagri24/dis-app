@@ -37,6 +37,7 @@ export const useAppStore = create<AppState>()(
           spotifyTokens: null,
           spotifyUser: null,
       }),
+      disconnectSpotify: () => set({ spotifyTokens: null, spotifyUser: null }),
     }),
     {
       name: 'you-decide-storage', // Name of the item in localStorage

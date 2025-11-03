@@ -74,4 +74,5 @@ export interface AppState {
     setSpotifyUser: (user: SpotifyUser | null) => void;
     setAuthLoading: (loading: boolean) => void;
     clearState: () => void;
+    disconnectSpotify: () => void;
 }

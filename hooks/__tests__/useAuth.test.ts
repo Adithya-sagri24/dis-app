@@ -1,17 +1,18 @@
 // Implemented hook tests for `useAuth`.
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+// Fix: Import `Mock` type from vitest to resolve namespace error.
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { useAuth } from '../useAuth';
 import { useAppStore } from '../../store/useAppStore';
 import { supabase } from '../../lib/supabaseClient';
 // Fix: Use a type-only import for the User type.
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 
 // Mock Supabase client
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
-      session: vi.fn(), // Corresponds to getSession changing to session
+      getSession: vi.fn(), // Fix: Changed from session to getSession for v2
       onAuthStateChange: vi.fn(() => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
@@ -65,7 +66,9 @@ describe('useAuth', () => {
   });
 
   it('should initialize with no user and fetch session', async () => {
-    mockSupabase.auth.session.mockReturnValueOnce({ user: mockUser } as any);
+    // Fix: Mock getSession (async) instead of session (sync)
+    // Fix: Cast to Mock to provide type information for the mocked function.
+    (mockSupabase.auth.getSession as Mock).mockResolvedValue({ data: { session: { user: mockUser } } });
 
     const { result } = renderHook(() => useAuth());
 
@@ -78,14 +81,16 @@ describe('useAuth', () => {
         // This flushes the promise queue
     });
     
-    expect(mockSupabase.auth.session).toHaveBeenCalled();
+    // Fix: Expect getSession to have been called
+    expect(mockSupabase.auth.getSession).toHaveBeenCalled();
     expect(store.setUser).toHaveBeenCalledWith(mockUser);
     expect(store.setAuthLoading).toHaveBeenCalledWith(false);
   });
 
   it('should update user on auth state change', () => {
-    let authCallback: (event: string, session: any) => void;
-    mockSupabase.auth.onAuthStateChange.mockImplementation(((callback: any) => {
+    let authCallback: (event: string, session: Session | null) => void;
+    // Fix: Cast to Mock to provide type information for the mocked function.
+    (mockSupabase.auth.onAuthStateChange as Mock).mockImplementation(((callback: any) => {
       authCallback = callback;
       return { data: { subscription: { unsubscribe: vi.fn() } } };
     }) as any);
@@ -93,7 +98,7 @@ describe('useAuth', () => {
     renderHook(() => useAuth());
 
     act(() => {
-      authCallback!('SIGNED_IN', { user: mockUser });
+      authCallback!('SIGNED_IN', { user: mockUser } as Session);
     });
 
     expect(store.setUser).toHaveBeenCalledWith(mockUser);
@@ -125,7 +130,8 @@ describe('useAuth', () => {
   
   it('should unsubscribe from auth state changes on unmount', () => {
     const unsubscribe = vi.fn();
-    mockSupabase.auth.onAuthStateChange.mockReturnValueOnce({
+    // Fix: Cast to Mock to provide type information for the mocked function.
+    (mockSupabase.auth.onAuthStateChange as Mock).mockReturnValueOnce({
       data: { subscription: { unsubscribe } },
     } as any);
 

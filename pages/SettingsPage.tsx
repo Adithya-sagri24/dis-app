@@ -1,9 +1,10 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { Header } from '../components/ui/Header';
+import { Button } from '../components/ui/Button';
 
 export const SettingsPage: React.FC = () => {
-    const { logMoodData, setLogMoodData } = useAppStore();
+    const { logMoodData, setLogMoodData, spotifyUser, disconnectSpotify } = useAppStore();
 
     const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
         setLogMoodData(e.target.checked);
@@ -41,9 +42,25 @@ export const SettingsPage: React.FC = () => {
                 </div>
             </div>
 
-             <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-2xl">
-                <h2 className="text-xl font-semibold mb-4">More Settings</h2>
-                <p className="text-gray-700 dark:text-gray-300">Other application settings will be available here in the future.</p>
+            <div className="mt-8 p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-2xl">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Connected Services</h2>
+                {spotifyUser ? (
+                    <div className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg">
+                        <div>
+                            <p className="font-medium text-gray-700 dark:text-gray-300">Spotify</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Connected as {spotifyUser.display_name}
+                            </p>
+                        </div>
+                        <Button onClick={disconnectSpotify} className="w-auto px-4 py-2 text-sm bg-red-600 hover:bg-red-700 focus:ring-red-300">
+                            Disconnect
+                        </Button>
+                    </div>
+                ) : (
+                    <p className="text-gray-500 dark:text-gray-400">
+                        Spotify is not connected. Connect it from the <a href="#/mood" className="text-blue-600 hover:underline dark:text-blue-400">Mood</a> page.
+                    </p>
+                )}
             </div>
         </div>
     );

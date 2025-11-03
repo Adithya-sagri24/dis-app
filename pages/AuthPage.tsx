@@ -12,8 +12,8 @@ export const AuthPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    // Fix: Changed signInWithPassword to signIn to match older Supabase API version
-    const { error } = await supabase.auth.signIn({ email, password });
+    // Fix: Use signInWithPassword to align with Supabase v2 API.
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) setError(error.message);
     setLoading(false);
   };
@@ -22,7 +22,7 @@ export const AuthPage: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    // Fix: The error on this line is likely a cascade from other type errors. The `signUp` method is correct for v1.
+    // Fix: The `signUp` method is correct for Supabase v2. The original error was likely a cascade from other type errors.
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) setError(error.message);
     else alert('Check your email for the confirmation link!');
@@ -32,8 +32,8 @@ export const AuthPage: React.FC = () => {
   const handleGoogleLogin = async () => {
     setError(null);
     setLoading(true);
-    // Fix: Changed signInWithOAuth to signIn to match older Supabase API version
-    const { error } = await supabase.auth.signIn({
+    // Fix: Use signInWithOAuth to align with Supabase v2 API.
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
     if (error) setError(error.message);

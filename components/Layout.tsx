@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './Navbar';
-import { DashboardPage } from '../pages/DashboardPage';
+import { HomePage } from '../pages/HomePage';
+import { MoodPage } from '../pages/MoodPage';
 import { TaskManagerPage } from '../pages/TaskManagerPage';
 import { SettingsPage } from '../pages/SettingsPage';
 import { AnalyticsPage } from '../pages/AnalyticsPage';
 import { PrivacyPage } from '../pages/PrivacyPage';
 
 const routes: Record<string, React.FC> = {
-  '#': DashboardPage,
+  '#/home': HomePage,
+  '#/mood': MoodPage,
   '#/tasks': TaskManagerPage,
   '#/settings': SettingsPage,
   '#/analytics': AnalyticsPage,
@@ -17,21 +19,31 @@ const routes: Record<string, React.FC> = {
 type RouteKeys = keyof typeof routes;
 
 export const Layout: React.FC = () => {
-    const [page, setPage] = useState<RouteKeys>(window.location.hash as RouteKeys || '#');
+    // Helper to get the correct page from the hash, defaulting to '#/home'
+    const getPageFromHash = (): RouteKeys => {
+        const hash = window.location.hash;
+        if (routes[hash as RouteKeys]) {
+            return hash as RouteKeys;
+        }
+        // Default for empty hash or invalid hash
+        return '#/home';
+    }
+
+    const [page, setPage] = useState<RouteKeys>(getPageFromHash());
 
     useEffect(() => {
         const handleHashChange = () => {
-            const hash = window.location.hash as RouteKeys;
-            setPage(routes[hash] ? hash : '#');
+            setPage(getPageFromHash());
         };
 
         window.addEventListener('hashchange', handleHashChange, false);
-        handleHashChange(); // Set initial page on load
+        // Also update on initial load in case the hash was already there
+        handleHashChange();
 
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
     
-    const PageComponent = routes[page] || DashboardPage;
+    const PageComponent = routes[page] || HomePage;
 
     return (
         <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans">

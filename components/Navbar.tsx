@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { Logo } from './Logo';
 
 interface NavLinkProps {
   href: string;
@@ -31,13 +32,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activeRoute }) => {
     return (
         <aside className="w-64 bg-white dark:bg-gray-800 p-4 flex flex-col justify-between shadow-lg flex-shrink-0">
             <div>
-                <div className="p-2 mb-8">
+                <div className="flex items-center gap-3 p-2 mb-8">
+                    <Logo className="w-9 h-9" />
                     <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
                         You Decide
                     </h1>
                 </div>
                 <nav className="space-y-2">
-                    <NavLink href="#" label="Dashboard" isActive={activeRoute === '#'} />
+                    <NavLink href="#/home" label="Home" isActive={activeRoute === '#/home'} />
+                    <NavLink href="#/mood" label="Mood" isActive={activeRoute === '#/mood'} />
                     <NavLink href="#/tasks" label="Tasks" isActive={activeRoute === '#/tasks'} />
                     <NavLink href="#/analytics" label="Analytics" isActive={activeRoute === '#/analytics'} />
                     <NavLink href="#/settings" label="Settings" isActive={activeRoute === '#/settings'} />

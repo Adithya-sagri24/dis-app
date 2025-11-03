@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useDebounce } from '../hooks/useDebounce';
 import { getRecommendations, redirectToAuth } from '../lib/spotifyService';
+import { getEmotionRegulationTarget } from '../lib/emotionUtils';
 import { Button } from './ui/Button';
 
 interface Track {
@@ -32,7 +33,9 @@ export const MusicRecommendations: React.FC = () => {
       setError(null);
       
       try {
-        const data = await getRecommendations(debouncedMood.valence, debouncedMood.energy);
+        // Emotion Regulation Logic: Get targets to balance the mood
+        const target = getEmotionRegulationTarget(debouncedMood.emotion);
+        const data = await getRecommendations(target.valence, target.energy);
         setRecommendations(data.tracks || []);
       } catch (err) {
         console.error(err);
@@ -95,7 +98,7 @@ export const MusicRecommendations: React.FC = () => {
     <div className="p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-            Music For Your Mood
+            Music to Balance Your Mood
         </h3>
         {spotifyUser && (
             <span className="text-sm text-gray-500 dark:text-gray-400">
